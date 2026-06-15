@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RL Concept Blogs — CartPole Series</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+  :root {
+    --bg:        #0f1117;
+    --surface:   #181c27;
+    --border:    #252a38;
+    --accent1:   #7c6af7;   /* purple — policy */
+    --accent2:   #3ecf8e;   /* green  — value  */
+    --accent3:   #f5a623;   /* amber  — reward */
+    --accent4:   #e05c6b;   /* red    — clip   */
+    --text:      #d4d8e8;
+    --muted:     #6b7280;
+    --heading:   #eef0f8;
+    --code-bg:   #12151f;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Serif', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.78;
+    padding: 0 0 80px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: linear-gradient(135deg, #0f1117 0%, #1a1430 50%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px 50px;
+    text-align: center;
+  }
+  .hero-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent1);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: clamp(26px, 4vw, 40px);
+    font-weight: 600;
+    color: var(--heading);
+    max-width: 700px;
+    margin: 0 auto 16px;
+    line-height: 1.25;
+  }
+  .hero p {
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  /* ── NAV PILLS ── */
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    padding: 28px 20px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(15,17,23,0.95);
+    backdrop-filter: blur(8px);
+    z-index: 10;
+  }
+  .nav a {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    transition: all 0.2s;
+  }
+  .nav a:hover { color: var(--heading); border-color: var(--accent1); }
+
+  /* ── LAYOUT ── */
+  .wrapper {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ── BLOG CARD ── */
+  .blog {
+    margin-top: 70px;
+    padding-bottom: 60px;
+    border-bottom: 1px solid var(--border);
+  }
+  .blog:last-child { border-bottom: none; }
+
+  .blog-header {
+    margin-bottom: 36px;
+  }
+  .blog-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--accent1);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .blog h2 {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: clamp(22px, 3.5vw, 32px);
+    font-weight: 600;
+    color: var(--heading);
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .blog-subtitle {
+    font-style: italic;
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  /* ── PROSE ── */
+  .blog p { margin-bottom: 1.3em; }
+  .blog h3 {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--heading);
+    margin: 2em 0 0.6em;
+  }
+  .blog h4 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--accent1);
+    letter-spacing: 1px;
+    margin: 1.6em 0 0.5em;
+    text-transform: uppercase;
+  }
+
+  /* ── CODE ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent1);
+    border-radius: 6px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    margin: 1.5em 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #c8d0e8;
+  }
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.87em;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 6px;
+    color: var(--accent2);
+  }
+  pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent1);
+    background: var(--surface);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin: 1.8em 0;
+    font-size: 15px;
+  }
+  .callout.green  { border-left-color: var(--accent2); }
+  .callout.amber  { border-left-color: var(--accent3); }
+  .callout.red    { border-left-color: var(--accent4); }
+  .callout strong { color: var(--heading); }
+
+  /* ── EQUATION BOX ── */
+  .eq {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 20px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    color: var(--accent3);
+    margin: 1.4em 0;
+    letter-spacing: 0.5px;
+  }
+  .eq .label {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    font-style: italic;
+    letter-spacing: 0;
+  }
+
+  /* ── COMPARISON TABLE ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.8em 0;
+    font-size: 14px;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  th {
+    background: var(--surface);
+    color: var(--accent1);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--accent2); font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+
+  /* ── DIAGRAM ── */
+  .diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 1.8em 0;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  /* ── HIGHLIGHT SPANS ── */
+  .hi-purple { color: var(--accent1); font-weight: 600; }
+  .hi-green  { color: var(--accent2); font-weight: 600; }
+  .hi-amber  { color: var(--accent3); font-weight: 600; }
+  .hi-red    { color: var(--accent4); font-weight: 600; }
+
+  /* ── KEY TERM ── */
+  .term {
+    display: inline-block;
+    background: rgba(124,106,247,0.12);
+    border: 1px solid rgba(124,106,247,0.3);
+    border-radius: 4px;
+    padding: 0 6px;
+    font-style: italic;
+    color: #b8aff7;
+  }
+
+  /* divider */
+  hr { border: none; border-top: 1px solid var(--border); margin: 2em 0; }
+
+  a { color: var(--accent1); }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-label">CartPole Project · RL Concept Series</div>
+  <h1>Four Blogs to Understand PPO and How it Works</h1>
+  <p>Actor-Critic Methods → PPO Paper → Stable-Baselines3 → MlpPolicy. 
+     Written for someone who already knows Bellman equations and optimal control.</p>
+</div>
+
+<!-- STICKY NAV -->
+<nav class="nav">
+  <a href="#blog1">① Actor-Critic</a>
+  <a href="#blog2">② PPO Paper</a>
+  <a href="#blog3">③ Stable-Baselines3</a>
+  <a href="#blog4">④ MlpPolicy</a>
+</nav>
+
+<div class="wrapper">
+
+<!-- ═══════════════════════════════════════════════════
+     BLOG 1 — ACTOR-CRITIC
+═══════════════════════════════════════════════════ -->
+<article class="blog" id="blog1">
+  <div class="blog-header">
+    <div class="blog-num">Blog 01 / 04</div>
+    <h2>Actor-Critic Methods: Two Heads, One Goal</h2>
+    <div class="blog-subtitle">How RL split the problem of "what to do" from "how good is this state"</div>
+  </div>
+
+  <h3>Start With What You Already Know</h3>
+  <p>
+    In your optimal control course, you encountered the <span class="term">value function</span> 
+    <em>V(x)</em> — the expected total future cost starting from state <em>x</em> under the optimal policy. 
+    And you encountered the <span class="term">policy</span> <em>π(x)</em> — the actual control law that 
+    tells you what input to apply at state <em>x</em>. In RL these are still the same two objects. 
+    Actor-Critic is simply: <strong>learn both of them at the same time, using each to help the other.</strong>
+  </p>
+
+  <h3>The Three Families of RL Algorithms</h3>
+  <p>Before Actor-Critic, there were two extreme approaches:</p>
+
+  <table>
+    <tr>
+      <th>Family</th>
+      <th>What it learns</th>
+      <th>How it acts</th>
+      <th>Problem</th>
+    </tr>
+    <tr>
+      <td>Value-based (DQN)</td>
+      <td>Q(s,a) for all actions</td>
+      <td>argmax over Q</td>
+      <td>Doesn't work with continuous actions; can't represent stochastic policies</td>
+    </tr>
+    <tr>
+      <td>Policy Gradient (REINFORCE)</td>
+      <td>π(a|s) directly</td>
+      <td>Sample from π</td>
+      <td>Very high variance in gradient estimates; slow to learn</td>
+    </tr>
+    <tr>
+      <td>Actor-Critic</td>
+      <td>Both π(a|s) and V(s)</td>
+      <td>Sample from π; update using V</td>
+      <td>More complex; two things to tune — but solves both above problems</td>
+    </tr>
+  </table>
+
+  <h3>The Core Idea: Policy Gradient Needs a Baseline</h3>
+  <p>
+    A pure policy gradient method (REINFORCE) updates the policy using the signal:
+  </p>
+
+  <div class="eq">
+    ∇θ J(θ) = E[ ∇θ log π(a|s) · G ]
+    <span class="label">G = total discounted return from this episode. This is the REINFORCE gradient.</span>
+  </div>
+
+  <p>
+    The problem: <em>G</em> has massive variance. If one episode got return 480 and another got 502, 
+    the gradient estimate is swamped by noise. You need thousands of episodes to get a reliable signal.
+  </p>
+
+  <p>
+    The fix: subtract a <span class="term">baseline</span> <em>b(s)</em> from the return. 
+    The gradient is still unbiased (the baseline can be anything that doesn't depend on the action), 
+    but the variance drops dramatically.
+  </p>
+
+  <div class="eq">
+    ∇θ J(θ) = E[ ∇θ log π(a|s) · (G − b(s)) ]
+    <span class="label">Subtracting baseline b(s) reduces variance without introducing bias.</span>
+  </div>
+
+  <p>
+    The best possible baseline? The <strong>value function V(s)</strong>. 
+    The quantity <em>(G - V(s))</em> even has a name:
+  </p>
+
+  <div class="eq">
+    A(s, a) = Q(s, a) − V(s)
+    <span class="label">The Advantage Function: "how much better is action a than the average action in state s?"</span>
+  </div>
+
+  <div class="callout green">
+    <strong>Connecting to optimal control:</strong> The advantage function is essentially the difference 
+    between the Q-function (cost-to-go with specific action <em>a</em>) and the V-function (optimal 
+    cost-to-go). In LQR terms, it measures how suboptimal a given control input is relative to the 
+    value function.
+  </div>
+
+  <h3>The Two-Head Architecture</h3>
+  <p>
+    So Actor-Critic uses two function approximators (usually neural networks):
+  </p>
+
+  <div class="diagram">┌─────────────────────────────────────────────────────┐
+│                    NEURAL NETWORK                    │
+│                                                     │
+│   Input: state s = [x, ẋ, θ, θ̇]                    │
+│         (for CartPole, a 4-dim vector)               │
+│              │                                      │
+│         [shared or separate hidden layers]           │
+│              │                   │                  │
+│     ┌────────▼───────┐  ┌───────▼────────┐         │
+│     │   ACTOR HEAD   │  │  CRITIC HEAD   │         │
+│     │   π(a | s; θ)  │  │   V(s; φ)      │         │
+│     │                │  │                │         │
+│     │ Outputs action │  │ Outputs a      │         │
+│     │ probabilities  │  │ scalar: "how   │         │
+│     │ [P(left),      │  │ good is this   │         │
+│     │  P(right)]     │  │ state?"        │         │
+│     └────────────────┘  └────────────────┘         │
+└─────────────────────────────────────────────────────┘
+
+  ACTOR  = the policy. Decides what to do.
+  CRITIC = the value function. Judges how good the situation is.</div>
+
+  <h3>The Training Loop (in words)</h3>
+  <p>Here is one full update cycle of a basic Actor-Critic:</p>
+
+  <pre>1. Actor observes state s_t
+2. Actor samples action a_t ~ π(·|s_t)
+3. Environment returns r_t and s_{t+1}
+
+4. Critic computes TD error (the "surprise"):
+      δ_t = r_t + γ·V(s_{t+1}) − V(s_t)
+           └── what actually happened ──┘   └── what was expected ──┘
+
+5. Critic updates: minimize δ_t² 
+   (make V(s_t) better predict future rewards)
+
+6. Actor updates: push probability of a_t UP if δ_t > 0
+                                         DOWN if δ_t < 0
+   gradient = ∇θ log π(a_t|s_t) · δ_t</pre>
+
+  <div class="callout amber">
+    <strong>The TD error δ_t IS the advantage estimate.</strong> It says: "I expected V(s_t) worth 
+    of future reward. I got r_t + γV(s_{t+1}). The difference is how much better/worse than expected 
+    this action was." This is a one-step approximation to the true advantage A(s,a).
+  </div>
+
+  <h3>Why "Critic" Helps the "Actor"</h3>
+  <p>
+    Without the critic, REINFORCE waits until the end of the episode to compute G. 
+    This means: (1) you must wait for episode termination, (2) you average over the entire trajectory, 
+    (3) variance is sky-high.
+  </p>
+  <p>
+    With the critic, you get a signal <em>after every single step</em>. The critic's V(s) is a 
+    learned "prediction" of future reward that substitutes for waiting for G. This is the same 
+    reasoning behind temporal difference (TD) methods in RL — bootstrap from your own estimate rather 
+    than waiting for ground truth.
+  </p>
+
+  <h3>A3C and A2C: Going Parallel</h3>
+  <p>
+    In 2016, DeepMind proposed A3C (Asynchronous Advantage Actor-Critic). The idea: run N 
+    copies of the environment in parallel with N actors. Each actor independently collects experience 
+    and computes gradients, then asynchronously pushes updates to a shared network. 
+    A2C (the synchronous version, which PPO builds on) waits for all N actors to finish before 
+    updating — cleaner gradients, easier to reason about.
+  </p>
+
+  <p>
+    This is the family PPO belongs to. It is an Actor-Critic method. The actor is the policy network, 
+    the critic is the value network. What PPO adds on top — the clipping trick — is what the next 
+    blog is about.
+  </p>
+
+  <div class="callout">
+    <strong>Summary:</strong> Actor = policy π(a|s), learns what action to take. 
+    Critic = value function V(s), learns how good a state is and provides a low-variance training 
+    signal for the actor. Together they solve what neither can do well alone.
+  </div>
+</article>
+
+
+<!-- ═══════════════════════════════════════════════════
+     BLOG 2 — PPO PAPER
+═══════════════════════════════════════════════════ -->
+<article class="blog" id="blog2">
+  <div class="blog-header">
+    <div class="blog-num">Blog 02 / 04</div>
+    <h2>Proximal Policy Optimization: Reading the Paper</h2>
+    <div class="blog-subtitle">Schulman et al., OpenAI 2017 — decoded from first principles</div>
+  </div>
+
+  <h3>The Problem PPO Is Solving</h3>
+  <p>
+    Vanilla policy gradient has a dangerous failure mode. You compute a gradient, take a big step, 
+    and the policy changes so much that the new policy collects completely different data. 
+    The next gradient estimate is now computed from data that's irrelevant to the current policy. 
+    Training destabilizes, performance collapses. In practice you have to use tiny learning rates — 
+    which means painfully slow learning.
+  </p>
+  <p>
+    The question PPO answers: <strong>how large can the policy update step be before it becomes 
+    destructive?</strong> And can we enforce a safe step size without complex second-order optimization?
+  </p>
+
+  <h3>The Predecessor: TRPO</h3>
+  <p>
+    Trust Region Policy Optimization (also from Schulman, 2015) solved this with a hard constraint. 
+    At each update, maximize the expected advantage, but don't let the new policy deviate too far 
+    from the old one, measured by KL divergence:
+  </p>
+
+  <div class="eq">
+    maximize  E[ (π_new(a|s) / π_old(a|s)) · Â ]
+    subject to  E[ KL(π_old, π_new) ] ≤ δ
+    <span class="label">TRPO: maximize performance improvement while keeping the policy "close" to what it was.</span>
+  </div>
+
+  <p>
+    TRPO works well but has two problems: (1) it requires computing second-order derivatives 
+    (conjugate gradient), which is expensive and hard to implement. (2) It doesn't work with 
+    architectures that share parameters between actor and critic, or use dropout. PPO keeps 
+    the spirit of TRPO but replaces the hard constraint with a clever objective function.
+  </p>
+
+  <h3>The PPO Objective: Clipping</h3>
+  <p>
+    Define the <span class="term">probability ratio</span>:
+  </p>
+
+  <div class="eq">
+    r_t(θ) = π_θ(a_t | s_t) / π_θ_old(a_t | s_t)
+    <span class="label">How much more (or less) likely is the current policy to take the same action as the old policy?</span>
+  </div>
+
+  <p>
+    When r = 1, new and old policies are identical. When r = 1.5, the new policy is 50% more 
+    likely to take that action. When r = 0.5, the new policy is half as likely.
+  </p>
+
+  <p>The naive surrogate objective (from TRPO) is just:</p>
+
+  <div class="eq">
+    L_CPI(θ) = E[ r_t(θ) · Â_t ]
+    <span class="label">Without any constraint, maximizing this causes destructively large policy updates.</span>
+  </div>
+
+  <p>
+    PPO replaces this with a clipped version that <em>refuses to give credit for going too far</em>:
+  </p>
+
+  <div class="eq">
+    L_CLIP(θ) = E[ min( r_t · Â_t ,  clip(r_t, 1−ε, 1+ε) · Â_t ) ]
+    <span class="label">The core PPO objective. ε is typically 0.2. This is equation (7) from the paper.</span>
+  </div>
+
+  <h3>Understanding the Clip: Two Cases</h3>
+  <p>The clip works differently depending on the sign of the advantage. Let's think through both:</p>
+
+  <div class="callout green">
+    <strong>Case 1: Â &gt; 0 (good action — we want more of this)</strong><br><br>
+    We want to increase π(a|s), so r_t should grow above 1. 
+    But if r_t > 1+ε, the clip kicks in and returns 1+ε instead of r_t. 
+    The <code>min</code> then picks the clipped value.<br><br>
+    <strong>Effect:</strong> We increase the probability of this action, but only up to 1+ε times what it was. 
+    We can't go further even if the gradient says to.
+  </div>
+
+  <div class="callout red">
+    <strong>Case 2: Â &lt; 0 (bad action — we want less of this)</strong><br><br>
+    We want to decrease π(a|s), so r_t should shrink below 1. 
+    But if r_t &lt; 1−ε, the clip kicks in and returns 1−ε. 
+    The <code>min</code> then picks the unclipped value (which is more negative).<br><br>
+    <strong>Effect:</strong> We still decrease the probability of this action fully. 
+    The clip doesn't protect bad actions.
+  </div>
+
+  <div class="callout amber">
+    <strong>The deep insight:</strong> The clip creates a "pessimistic lower bound." It says: 
+    "If the update would be beneficial and we're about to do a lot of it, stop early. 
+    If the update is harmful, let it through." The agent always errs on the side of caution 
+    when making large changes.
+  </div>
+
+  <h3>The Advantage Estimator: GAE</h3>
+  <p>
+    PPO uses Generalized Advantage Estimation (GAE) to compute Â_t. This is a key component. 
+    Recall the one-step TD error:
+  </p>
+
+  <div class="eq">
+    δ_t = r_t + γ·V(s_{t+1}) − V(s_t)
+    <span class="label">One-step TD error: immediate reward + discounted future value estimate − current value estimate</span>
+  </div>
+
+  <p>GAE combines multiple steps of these TD errors with an exponential decay:</p>
+
+  <div class="eq">
+    Â_t = δ_t + (γλ)·δ_{t+1} + (γλ)²·δ_{t+2} + ... + (γλ)^{T-t-1}·δ_{T-1}
+    <span class="label">GAE(γ, λ). λ controls the bias-variance tradeoff. Paper uses λ=0.95, γ=0.99.</span>
+  </div>
+
+  <p>
+    When λ=0: pure one-step TD (low variance, high bias — critic errors propagate). 
+    When λ=1: full Monte Carlo return (zero bias, high variance). 
+    λ=0.95 is a carefully chosen middle ground that works well empirically across many tasks.
+  </p>
+
+  <h3>The Full PPO Loss Function</h3>
+  <p>
+    The paper combines three terms into one loss that gets optimized:
+  </p>
+
+  <div class="eq">
+    L(θ) = E[ L_CLIP(θ)  −  c₁·L_VF(θ)  +  c₂·S[π](s) ]
+    <span class="label">Equation (9) from the paper. Three terms: policy loss, value loss, entropy bonus.</span>
+  </div>
+
+  <table>
+    <tr>
+      <th>Term</th>
+      <th>What It Is</th>
+      <th>Why It's There</th>
+    </tr>
+    <tr>
+      <td>L_CLIP</td>
+      <td>The clipped surrogate policy loss</td>
+      <td>Improves the policy while preventing large updates</td>
+    </tr>
+    <tr>
+      <td>−c₁·L_VF</td>
+      <td>Value function MSE: (V(s) − V_target)²</td>
+      <td>Trains the critic to predict returns accurately</td>
+    </tr>
+    <tr>
+      <td>+c₂·S[π]</td>
+      <td>Entropy of the policy distribution</td>
+      <td>Encourages exploration — prevents the policy from becoming too deterministic too early</td>
+    </tr>
+  </table>
+
+  <h3>The PPO Algorithm (from the paper)</h3>
+  <p>Algorithm 1 from the paper, explained line by line:</p>
+
+<pre>for iteration = 1, 2, ... do
+
+  # Phase 1: Data Collection
+  for each of N parallel actors:
+    run current policy π_θ_old for T timesteps
+    compute advantage estimates Â_1 ... Â_T using GAE
+
+  # Phase 2: Policy Update
+  for K epochs:
+    for each minibatch of size M from the NT timesteps:
+      compute L_CLIP + L_VF + entropy
+      one step of Adam gradient ascent
+  
+  θ_old ← θ   # old policy becomes the new policy for next round
+
+end for</pre>
+
+  <div class="callout">
+    <strong>The key innovation:</strong> Standard policy gradient does ONE gradient step per batch 
+    of data. PPO does <strong>K epochs</strong> (typically 10) of minibatch updates on the same 
+    collected data. This is far more data-efficient. The clipping is what makes this safe — without 
+    it, multiple updates on the same data cause the policy to drift too far.
+  </div>
+
+  <h3>Hyperparameters from the Paper</h3>
+
+  <table>
+    <tr>
+      <th>Hyperparameter</th>
+      <th>Value Used</th>
+      <th>What It Controls</th>
+    </tr>
+    <tr>
+      <td>ε (clip ratio)</td>
+      <td>0.2</td>
+      <td>How much the policy can change per update. ±20% probability ratio allowed.</td>
+    </tr>
+    <tr>
+      <td>γ (discount)</td>
+      <td>0.99</td>
+      <td>How much future rewards are worth. 0.99 means reward 100 steps away is worth 0.99^100 ≈ 37% of immediate reward.</td>
+    </tr>
+    <tr>
+      <td>λ (GAE)</td>
+      <td>0.95</td>
+      <td>Bias-variance tradeoff in advantage estimation.</td>
+    </tr>
+    <tr>
+      <td>T (horizon)</td>
+      <td>2048</td>
+      <td>Steps collected per actor before each update.</td>
+    </tr>
+    <tr>
+      <td>K (epochs)</td>
+      <td>10</td>
+      <td>How many passes through collected data per update.</td>
+    </tr>
+    <tr>
+      <td>M (minibatch)</td>
+      <td>64</td>
+      <td>Minibatch size for each gradient step.</td>
+    </tr>
+  </table>
+
+  <h3>Why Did PPO Win?</h3>
+  <p>
+    The paper benchmarks PPO against TRPO, A2C, vanilla PG, and others on 7 MuJoCo robotics 
+    environments. PPO wins on almost all of them — not because it's the most theoretically rigorous, 
+    but because it hits the right balance:
+  </p>
+
+  <div class="diagram">TRPO:  Theoretically motivated, hard constraint, 2nd order gradients
+       → Works well, but complex and slow to implement
+
+PPO:   Pragmatic approximation, simple clip, 1st order (Adam) only
+       → Nearly same performance, 5x simpler code, 2x faster wallclock
+
+The paper's ε=0.2 clipping beats the KL-penalty approach in experiments.
+This is an empirical win, not a theoretical one — PPO is engineering 
+that works remarkably well in practice.</div>
+
+  <div class="callout green">
+    <strong>Connecting to optimal control:</strong> PPO is doing approximate dynamic programming 
+    with neural networks. The critic is approximating the value function V*(s). The actor is 
+    approximating the optimal policy π*(s). The clipping is a practical stability constraint — 
+    the RL equivalent of a step-size bound in gradient descent.
+  </div>
+</article>
+
+
+<!-- ═══════════════════════════════════════════════════
+     BLOG 3 — STABLE-BASELINES3
+═══════════════════════════════════════════════════ -->
+<article class="blog" id="blog3">
+  <div class="blog-header">
+    <div class="blog-num">Blog 03 / 04</div>
+    <h2>Stable-Baselines3: A Trustworthy RL Toolbox</h2>
+    <div class="blog-subtitle">What it is, how it's structured, and why it matters for learning RL</div>
+  </div>
+
+  <h3>What Is It?</h3>
+  <p>
+    Stable-Baselines3 (SB3) is a Python library that provides reliable, well-tested implementations 
+    of major deep RL algorithms. It was created because early RL code was notoriously hard to 
+    reproduce — two "implementations" of PPO could behave completely differently due to subtle 
+    differences in reward normalization, gradient clipping, or advantage computation.
+  </p>
+  <p>
+    SB3 is the successor to Stable-Baselines (which was itself a fork of OpenAI Baselines). 
+    It's written in PyTorch and is the current community standard for RL experimentation.
+  </p>
+
+  <h3>Algorithms Available</h3>
+
+  <table>
+    <tr>
+      <th>Algorithm</th>
+      <th>Type</th>
+      <th>Action Space</th>
+      <th>When to Use</th>
+    </tr>
+    <tr>
+      <td>PPO</td>
+      <td>On-policy, Actor-Critic</td>
+      <td>Discrete + Continuous</td>
+      <td>Default choice. Works well on almost everything.</td>
+    </tr>
+    <tr>
+      <td>A2C</td>
+      <td>On-policy, Actor-Critic</td>
+      <td>Discrete + Continuous</td>
+      <td>Faster per update than PPO but less stable.</td>
+    </tr>
+    <tr>
+      <td>DQN</td>
+      <td>Off-policy, Value-based</td>
+      <td>Discrete only</td>
+      <td>Classic; good for discrete action problems.</td>
+    </tr>
+    <tr>
+      <td>SAC</td>
+      <td>Off-policy, Actor-Critic</td>
+      <td>Continuous only</td>
+      <td>State of the art for continuous control (robotics).</td>
+    </tr>
+    <tr>
+      <td>TD3</td>
+      <td>Off-policy, Actor-Critic</td>
+      <td>Continuous only</td>
+      <td>Very stable for continuous control; deterministic policy.</td>
+    </tr>
+    <tr>
+      <td>HER</td>
+      <td>Off-policy wrapper</td>
+      <td>Continuous</td>
+      <td>Goal-conditioned tasks (robotics, manipulation).</td>
+    </tr>
+  </table>
+
+  <h3>The Design Philosophy</h3>
+  <p>
+    SB3 follows a consistent API across all algorithms. The core three things you always do are:
+  </p>
+
+<pre>from stable_baselines3 import PPO   # or A2C, DQN, SAC, TD3
+
+# 1. CREATE: Wrap your environment with an algorithm
+model = PPO("MlpPolicy", env, verbose=1)
+
+# 2. TRAIN: Collect data and update the policy
+model.learn(total_timesteps=50_000)
+
+# 3. PREDICT: Use the trained policy
+action, _states = model.predict(obs, deterministic=True)</pre>
+
+  <p>
+    This is the same three lines regardless of which algorithm you use. That's the point — 
+    SB3 abstracts away the implementation details so you can focus on understanding the algorithm 
+    conceptually and tuning hyperparameters.
+  </p>
+
+  <h3>What Happens Inside model.learn()?</h3>
+  <p>
+    For PPO specifically, here is what SB3 does under the hood when you call <code>model.learn(total_timesteps=50_000)</code>:
+  </p>
+
+<pre>While total steps collected &lt; 50,000:
+
+  ┌── Data Collection Phase ─────────────────────────────┐
+  │  Run current policy for n_steps=2048 timesteps       │
+  │  Store: states, actions, rewards, dones, values, log_probs │
+  │  Compute GAE advantage estimates                     │
+  │  Normalize advantages (mean=0, std=1)                │
+  └──────────────────────────────────────────────────────┘
+        │
+        ▼
+  ┌── Optimization Phase ────────────────────────────────┐
+  │  For each of n_epochs=10 epochs:                     │
+  │    Shuffle the 2048 timesteps                        │
+  │    For each minibatch of 64 samples:                 │
+  │      Compute L_CLIP + L_VF + entropy                 │
+  │      Adam gradient step                              │
+  │      Clip gradient norm to 0.5                       │
+  └──────────────────────────────────────────────────────┘</pre>
+
+  <h3>Key SB3-Specific Defaults (vs the Paper)</h3>
+  <p>
+    SB3's PPO defaults differ slightly from the paper's hyperparameters. It's worth knowing these:
+  </p>
+
+  <table>
+    <tr>
+      <th>Setting</th>
+      <th>Paper (MuJoCo)</th>
+      <th>SB3 Default</th>
+      <th>Notes</th>
+    </tr>
+    <tr>
+      <td>n_steps</td>
+      <td>2048</td>
+      <td>2048</td>
+      <td>Same. Steps per rollout per environment.</td>
+    </tr>
+    <tr>
+      <td>batch_size</td>
+      <td>64</td>
+      <td>64</td>
+      <td>Same.</td>
+    </tr>
+    <tr>
+      <td>n_epochs</td>
+      <td>10</td>
+      <td>10</td>
+      <td>Same.</td>
+    </tr>
+    <tr>
+      <td>learning_rate</td>
+      <td>3e-4</td>
+      <td>3e-4</td>
+      <td>Same.</td>
+    </tr>
+    <tr>
+      <td>clip_range</td>
+      <td>ε=0.2</td>
+      <td>0.2</td>
+      <td>Same.</td>
+    </tr>
+    <tr>
+      <td>gae_lambda</td>
+      <td>0.95</td>
+      <td>0.95</td>
+      <td>Same.</td>
+    </tr>
+    <tr>
+      <td>normalize_advantage</td>
+      <td>not mentioned</td>
+      <td>True</td>
+      <td>SB3 normalizes advantages — important implementation detail!</td>
+    </tr>
+    <tr>
+      <td>max_grad_norm</td>
+      <td>not mentioned</td>
+      <td>0.5</td>
+      <td>SB3 clips gradient norms for stability.</td>
+    </tr>
+  </table>
+
+  <h3>Useful SB3 Features You'll Use</h3>
+
+  <h4>Evaluation utility</h4>
+<pre>from stable_baselines3.common.evaluation import evaluate_policy
+
+mean_reward, std_reward = evaluate_policy(
+    model, 
+    eval_env, 
+    n_eval_episodes=20,
+    deterministic=True
+)
+print(f"Mean: {mean_reward:.1f} ± {std_reward:.1f}")</pre>
+
+  <h4>Save and load</h4>
+<pre>model.save("my_ppo_cartpole")
+loaded_model = PPO.load("my_ppo_cartpole", env=env)</pre>
+
+  <h4>Custom hyperparameters</h4>
+<pre>model = PPO(
+    "MlpPolicy",
+    env,
+    learning_rate=3e-4,
+    n_steps=2048,
+    batch_size=64,
+    n_epochs=10,
+    gamma=0.99,
+    gae_lambda=0.95,
+    clip_range=0.2,
+    ent_coef=0.0,      # entropy coefficient c2
+    vf_coef=0.5,       # value function coefficient c1
+    verbose=1
+)</pre>
+
+  <h4>Training callbacks — watching progress</h4>
+<pre>from stable_baselines3.common.callbacks import EvalCallback
+
+eval_callback = EvalCallback(
+    eval_env,
+    best_model_save_path="./best_model/",
+    eval_freq=5000,
+    n_eval_episodes=10,
+    verbose=1
+)
+model.learn(total_timesteps=50_000, callback=eval_callback)</pre>
+
+  <div class="callout">
+    <strong>Why SB3 and not from scratch?</strong> At this stage of learning, your goal is to 
+    understand the algorithm, not debug implementation bugs. RL implementations have dozens of 
+    "implementation details" (advantage normalization, gradient clipping, value loss clipping, 
+    learning rate schedules) that can silently kill performance. SB3 gets all of these right, 
+    letting you focus on understanding what the hyperparameters do. After you understand PPO deeply, 
+    then write it from scratch.
+  </div>
+</article>
+
+
+<!-- ═══════════════════════════════════════════════════
+     BLOG 4 — MLPPOLICY
+═══════════════════════════════════════════════════ -->
+<article class="blog" id="blog4">
+  <div class="blog-header">
+    <div class="blog-num">Blog 04 / 04</div>
+    <h2>MlpPolicy: The Neural Network Inside PPO</h2>
+    <div class="blog-subtitle">What the actual network looks like, how it parameterizes the policy and value function</div>
+  </div>
+
+  <h3>What Does "MlpPolicy" Mean?</h3>
+  <p>
+    When you write <code>PPO("MlpPolicy", env)</code>, you're telling SB3 to use a 
+    <strong>Multi-Layer Perceptron</strong> (a standard feedforward neural network) as the 
+    function approximator for both the actor and the critic.
+  </p>
+  <p>
+    SB3 offers three policy types:
+  </p>
+
+  <table>
+    <tr>
+      <th>Policy String</th>
+      <th>Input Type</th>
+      <th>Network</th>
+      <th>When to Use</th>
+    </tr>
+    <tr>
+      <td>MlpPolicy</td>
+      <td>Flat vector (1D)</td>
+      <td>Dense layers (MLP)</td>
+      <td>State is a vector: CartPole [4], MuJoCo [17+], etc.</td>
+    </tr>
+    <tr>
+      <td>CnnPolicy</td>
+      <td>Images (pixels)</td>
+      <td>Conv layers + MLP</td>
+      <td>Atari games, visual observations</td>
+    </tr>
+    <tr>
+      <td>MultiInputPolicy</td>
+      <td>Dict of inputs</td>
+      <td>Mixed network</td>
+      <td>Environments with multiple observation types</td>
+    </tr>
+  </table>
+
+  <p>
+    For CartPole, the observation is <code>[cart_pos, cart_vel, theta, theta_dot]</code> — 
+    a flat 4-dimensional vector. MlpPolicy is the correct choice.
+  </p>
+
+  <h3>The Exact Network Architecture</h3>
+  <p>
+    SB3's MlpPolicy for PPO uses this default architecture:
+  </p>
+
+  <div class="diagram">INPUT: state s = [x, ẋ, θ, θ̇]   shape: (4,)
+       │
+       ▼
+┌─────────────────────────────────────────────────────┐
+│          SHARED FEATURE EXTRACTOR (optional)        │
+│          Identity for MlpPolicy — no shared layers  │
+│          (actor and critic have separate networks)   │
+└─────────────────────────────────────────────────────┘
+       │                          │
+       ▼                          ▼
+┌──────────────────┐    ┌──────────────────┐
+│   ACTOR NETWORK  │    │  CRITIC NETWORK  │
+│                  │    │                  │
+│  Linear(4 → 64)  │    │  Linear(4 → 64)  │
+│  Tanh            │    │  Tanh            │
+│  Linear(64 → 64) │    │  Linear(64 → 64) │
+│  Tanh            │    │  Tanh            │
+│  Linear(64 → 2)  │    │  Linear(64 → 1)  │
+│  Softmax         │    │  (no activation) │
+│                  │    │                  │
+│  Output:         │    │  Output:         │
+│  [P(left),       │    │  V(s) — a scalar │
+│   P(right)]      │    │  value estimate  │
+└──────────────────┘    └──────────────────┘
+       │                          │
+       ▼                          ▼
+   sample action              used to compute
+   a ~ Categorical(P)         advantage Â_t</div>
+
+  <div class="callout">
+    Two layers of 64 units each, tanh activations. This is exactly what the PPO paper 
+    describes for the MuJoCo benchmarks: "a fully-connected MLP with two hidden layers of 
+    64 units, and tanh nonlinearities."
+  </div>
+
+  <h3>Why Tanh and Not ReLU?</h3>
+  <p>
+    ReLU is more popular in supervised learning. RL tends to use Tanh for policy networks for 
+    a few reasons:
+  </p>
+
+  <div class="diagram">ReLU(x) = max(0, x)      → Output range: [0, ∞)
+Tanh(x) = (e^x−e^-x)/(e^x+e^-x)  → Output range: (−1, +1)
+
+In RL, policy activations often need to represent both
+positive and negative signals (lean left vs lean right,
+speed up vs slow down). Tanh is naturally centered at 0
+and bounded, which keeps activations in a stable range
+across the many gradient updates during training.</div>
+
+  <h3>How the Actor Outputs a Discrete Action</h3>
+  <p>
+    For CartPole (discrete actions: 0 or 1), the actor's final layer outputs 2 logits. 
+    These get converted to probabilities:
+  </p>
+
+<pre>logits = actor_network(state)      # shape: (2,)  e.g. [1.3, -0.2]
+
+# Convert to probability distribution
+probs = softmax(logits)            # e.g. [0.75, 0.25]
+
+# During training: sample stochastically
+action = Categorical(probs).sample()   # 0 or 1
+
+# During evaluation (deterministic=True): take argmax
+action = argmax(probs)             # 0 (higher probability)</pre>
+
+  <p>
+    The log-probability of the chosen action, <code>log π(a|s)</code>, is stored during collection 
+    and used in the PPO clip objective. This is the <code>log_prob</code> in the training buffer.
+  </p>
+
+  <h3>How the Critic Outputs a Value</h3>
+  <p>
+    The critic network outputs a single scalar — V(s), the estimated total discounted future 
+    reward from this state:
+  </p>
+
+<pre>value = critic_network(state)      # shape: (1,)  e.g. [487.3]
+
+# Interpretation: "From this state, I expect to accumulate
+# roughly 487 more units of reward if I follow the current policy."
+
+# CartPole max reward is 500 (500 timesteps × +1 each)
+# So value ≈ 487 means "I'm almost certainly going to balance 
+# until the time limit"</pre>
+
+  <h3>The Advantage Estimate Connecting Both</h3>
+  <p>
+    After collecting a rollout, SB3 computes the advantage for each timestep using the critic's 
+    value estimates and the actual rewards:
+  </p>
+
+<pre># Pseudocode of what SB3 does after each rollout:
+
+for t in reversed(range(T)):
+    # One-step TD error (the "surprise")
+    delta_t = rewards[t] + gamma * values[t+1] * (1 - dones[t]) - values[t]
+    
+    # GAE: exponential blend of TD errors
+    advantages[t] = delta_t + gamma * gae_lambda * advantages[t+1] * (1 - dones[t])
+
+# Normalize advantages across the batch
+advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)</pre>
+
+  <p>
+    That last line — normalization — is important and not in the original paper. 
+    It ensures advantages have zero mean and unit variance across the batch, 
+    which stabilizes training significantly.
+  </p>
+
+  <h3>Customizing the Network Architecture</h3>
+  <p>
+    You can change the architecture through the <code>policy_kwargs</code> argument:
+  </p>
+
+<pre>model = PPO(
+    "MlpPolicy",
+    env,
+    policy_kwargs=dict(
+        net_arch=[64, 64],          # default: two layers of 64
+        activation_fn=torch.nn.Tanh # default: Tanh
+    )
+)
+
+# Try a wider network:
+policy_kwargs=dict(net_arch=[256, 256])
+
+# Try a deeper network:
+policy_kwargs=dict(net_arch=[64, 64, 64])
+
+# Try separate arch for actor and critic:
+policy_kwargs=dict(net_arch=dict(pi=[64, 64], vf=[64, 64]))</pre>
+
+  <div class="callout amber">
+    <strong>For CartPole, the default 2×64 is already overkill.</strong> CartPole is a nearly 
+    linear system — the optimal policy is approximately a linear function of the state. 
+    The PPO policy will converge to something close to your hand-crafted PD controller from 
+    Phase 3, but represented as weights in a neural network rather than explicit gains.
+  </div>
+
+  <h3>What the Network Actually Learns for CartPole</h3>
+  <p>
+    After training, if you inspect the learned policy, you'll find it behaves almost identically 
+    to your Phase 3 better_policy:
+  </p>
+
+<pre># Your hand-crafted policy:
+if theta + 0.1 * theta_dot > 0:
+    action = 1   # push right
+else:
+    action = 0   # push left
+
+# PPO's MlpPolicy learns something approximately equivalent to:
+# action = 1  if  w1*theta + w2*theta_dot + w3*cart_pos + w4*cart_vel > 0
+#
+# The weights w1, w2, w3, w4 are encoded in the first layer of the network.
+# The neural net doesn't "need" two layers for this problem —
+# but it figures out the right linear combination regardless.</pre>
+
+  <p>
+    This is a key insight: for linear or near-linear systems, RL with neural networks rediscovers 
+    something close to what classical control theory would compute (an LQR controller). 
+    The difference is RL finds this <em>without ever knowing the system dynamics</em> — only from 
+    reward signals.
+  </p>
+
+  <div class="callout green">
+    <strong>The big picture:</strong> <code>PPO("MlpPolicy", env)</code> is shorthand for: 
+    "Use two separate 2×64 tanh MLPs — one to represent π(a|s), one to represent V(s) — 
+    and optimize them together using the clipped surrogate objective with GAE advantage estimates, 
+    Adam optimizer, for K epochs per rollout." Every one of those words now means something to you.
+  </div>
+
+  <hr>
+
+  <h3>Putting All Four Blogs Together</h3>
+
+  <div class="diagram">ACTOR-CRITIC          PPO                 SB3              MlpPolicy
+─────────────────────────────────────────────────────────────────
+"We need two          "But vanilla AC     "Here's a           "The network is
+ things: a policy     updates are too     battle-tested       2 layers × 64
+ and a value fn.      aggressive.         implementation      units, tanh.
+ Use V(s) as a        Use a clipped       with the right      Actor outputs
+ baseline to          objective to        defaults, so        action probs.
+ reduce variance      limit how           you can focus       Critic outputs
+ in the policy        much the            on the concepts,    a scalar V(s)."
+ gradient."           policy changes      not the bugs."
+                      per update."</div>
+
+</article>
+</div><!-- /wrapper -->
+</body>
+</html>
